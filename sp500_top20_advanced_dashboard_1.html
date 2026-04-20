@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&P 500 — Top 20 Buy Signals · Advanced Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06060a;
+  --bg2: #0d0d14;
+  --bg3: #12121c;
+  --bg4: #1a1a27;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #4f7fff;
+  --accent2: #7c5cfc;
+  --green: #22c983;
+  --red: #f5525a;
+  --amber: #f7b731;
+  --text: #e8e8f0;
+  --muted: #7878a0;
+  --dim: #3a3a55;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+/* ── Layout ── */
+.shell { max-width: 1400px; margin: 0 auto; padding: 0 24px 60px; }
+/* ── Header ── */
+.hdr {
+  padding: 40px 0 32px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+}
+.hdr-left {}
+.hdr-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.hdr h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 800;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #e8e8f0 0%, #9090c0 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hdr-meta {
+  font-size: 12px; color: var(--muted); margin-top: 6px;
+  font-family: 'DM Mono', monospace;
+}
+.hdr-right { text-align: right; flex-shrink: 0; }
+.hdr-right .data-badge {
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.hdr-right .data-badge span { color: var(--text); }
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 10px 18px; border: none; background: none; cursor: pointer;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+/* ── KPI Row ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.kpi {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.kpi::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.kpi-label { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+.kpi-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--text); }
+.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.kpi-val.green { color: var(--green); }
+.kpi-val.amber { color: var(--amber); }
+/* ── 2-col chart grid ── */
+.chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.chart-grid-full { margin-bottom: 20px; }
+.card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; font-family: 'DM Mono', monospace; }
+/* ── Table ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead th {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left; white-space: nowrap; cursor: pointer;
+  user-select: none;
+}
+thead th:hover { color: var(--text); }
+thead th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+thead th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+tbody tr:hover { background: var(--bg4); }
+tbody tr:last-child { border-bottom: none; }
+td { padding: 11px 12px; white-space: nowrap; vertical-align: middle; }
+.sym-cell { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+.sym-cell small { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400; color: var(--muted); }
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 4px; font-size: 10.5px; font-weight: 500;
+  font-family: 'DM Mono', monospace;
+}
+.badge-green { background: rgba(34,201,131,0.15); color: #22c983; }
+.badge-red   { background: rgba(245,82,90,0.15);  color: #f5525a; }
+.badge-amber { background: rgba(247,183,49,0.15); color: #f7b731; }
+.badge-blue  { background: rgba(79,127,255,0.15); color: #4f7fff; }
+.badge-gray  { background: rgba(120,120,160,0.15); color: #9090b0; }
+.score-bar { display: flex; align-items: center; gap: 8px; }
+.score-track { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; min-width: 60px; }
+.score-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.score-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); min-width: 32px; text-align: right; }
+.rsi-pill {
+  display: inline-block; padding: 2px 7px;
+  border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+}
+/* RSI colors set inline */
+.52w-bar { position: relative; height: 4px; background: var(--bg4); border-radius: 2px; min-width: 80px; }
+.52w-range { position: absolute; height: 100%; background: var(--dim); border-radius: 2px; }
+.52w-cursor { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--green); border-radius: 1px; }
+/* ── Sector tag ── */
+.sector-tag {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 4px; font-family: 'DM Mono', monospace;
+  border: 1px solid;
+}
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.filter-bar input, .filter-bar select {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); border-radius: var(--radius-sm);
+  padding: 7px 12px; font-size: 12px; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+.filter-bar input { min-width: 180px; }
+.result-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
+/* ── Heatmap ── */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.hm-cell {
+  border-radius: var(--radius-sm);
+  padding: 14px 12px;
+  text-align: center;
+  cursor: default;
+  transition: transform 0.15s;
+  position: relative;
+}
+.hm-cell:hover { transform: scale(1.03); z-index: 2; }
+.hm-sym { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+.hm-val { font-family: 'DM Mono', monospace; font-size: 12px; margin-top: 4px; }
+.hm-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+/* ── Radar ── */
+.radar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+/* ── Year table ── */
+.yr-cell { font-family: 'DM Mono', monospace; font-size: 11px; text-align: right; padding: 9px 10px !important; }
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 0 0;
+  margin-top: 40px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap;
+}
+.footer-brand { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.footer-disc { font-size: 11px; color: var(--muted); max-width: 600px; line-height: 1.7; }
+.footer-links { display: flex; gap: 12px; }
+.footer-links a {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--muted); text-decoration: none;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 14px; transition: all 0.2s;
+}
+.footer-links a:hover { color: var(--text); border-color: var(--border2); }
+/* ── Tooltip ── */
+.tooltip-box {
+  position: fixed; pointer-events: none;
+  background: var(--bg4); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 12px; z-index: 999; max-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none;
+}
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+  .heatmap-grid { grid-template-columns: repeat(4, 1fr); }
+  .hdr { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 600px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .heatmap-grid { grid-template-columns: repeat(3, 1fr); }
+  .radar-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-eyebrow">Quantitative Equity Research · S&P 500</div>
+    <h1>Top 20 Buy Signals<br>Advanced Analysis</h1>
+    <div class="hdr-meta">1.89M rows · 502 stocks · 2010–2024 · Scoring: Sharpe 40% · 1Y Return 35% · 30D Momentum 25%</div>
+  </div>
+  <div class="hdr-right">
+    <div class="data-badge">
+      <span>Dataset</span> S&P 500 Historical Prices<br>
+      <span>Benchmark</span> S&P 500 Index (2014–2024)<br>
+      <span>Fundamentals</span> 502 Companies<br>
+      <span>Updated</span> Dec 20, 2024
+    </div>
+  </div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+  <button class="tab-btn" onclick="switchTab('screener',this)">Stock Screener</button>
+  <button class="tab-btn" onclick="switchTab('risk',this)">Risk &amp; Volatility</button>
+  <button class="tab-btn" onclick="switchTab('performance',this)">Historical Performance</button>
+  <button class="tab-btn" onclick="switchTab('fundamentals',this)">Fundamentals</button>
+  <button class="tab-btn" onclick="switchTab('heatmap',this)">Heatmap</button>
+</nav>
+
+<!-- ══════════════════════════ TAB: OVERVIEW ══════════════════════════ -->
+<section class="tab-panel active" id="tab-overview">
+  <!-- KPIs -->
+  <div class="kpi-row" id="kpi-row"></div>
+  <!-- Charts row 1 -->
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Composite Score Ranking</div>
+      <div class="card-sub">Weighted multi-factor score (Sharpe · Return · Momentum)</div>
+      <div style="position:relative;height:340px;"><canvas id="c-ranking" role="img" aria-label="Horizontal bar chart of composite scores for top 20 stocks.">Composite scores for top 20 stocks.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Return vs. Volatility Bubble Map</div>
+      <div class="card-sub">Bubble size = composite score · ideal = top-left quadrant</div>
+      <div style="position:relative;height:340px;"><canvas id="c-scatter" role="img" aria-label="Scatter chart of 1Y return vs volatility. Bubble size represents composite score.">Return vs volatility scatter.</canvas></div>
+    </div>
+  </div>
+  <!-- Charts row 2 -->
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Sector Composition</div>
+      <div class="card-sub">Distribution of top 20 picks across S&P 500 sectors</div>
+      <div style="position:relative;height:260px;"><canvas id="c-sector" role="img" aria-label="Doughnut chart showing sector breakdown of top 20 picks.">Sector distribution.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sharpe Ratio vs Beta</div>
+      <div class="card-sub">Risk-adjusted return vs market sensitivity · ideal = top-left</div>
+      <div style="position:relative;height:260px;"><canvas id="c-sharpebeta" role="img" aria-label="Scatter chart of Sharpe ratio vs beta for top 20 stocks.">Sharpe vs Beta.</canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TAB: SCREENER ══════════════════════════ -->
+<section class="tab-panel" id="tab-screener">
+  <div class="filter-bar">
+    <input type="text" id="search-input" placeholder="Search symbol or company…" oninput="renderTable()">
+    <select id="sector-filter" onchange="renderTable()">
+      <option value="">All Sectors</option>
+    </select>
+    <select id="sort-filter" onchange="renderTable()">
+      <option value="Composite_Score">Sort: Composite Score</option>
+      <option value="Return_1Y_pct">Sort: 1Y Return</option>
+      <option value="Sharpe_Ratio">Sort: Sharpe Ratio</option>
+      <option value="Momentum_30d">Sort: 30D Momentum</option>
+      <option value="beta">Sort: Beta</option>
+      <option value="Volatility_pct">Sort: Volatility (Low)</option>
+      <option value="rsi">Sort: RSI</option>
+      <option value="Marketcap">Sort: Market Cap</option>
+    </select>
+    <span class="result-count" id="result-count">20 stocks</span>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table id="main-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Symbol</th>
+            <th>Sector</th>
+            <th>Price</th>
+            <th>52W Range</th>
+            <th>1Y Return</th>
+            <th>Sharpe</th>
+            <th>Beta</th>
+            <th>Volatility</th>
+            <th>30D Mom.</th>
+            <th>RSI(14)</th>
+            <th>Composite</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TAB: RISK ══════════════════════════ -->
+<section class="tab-panel" id="tab-risk">
+  <div class="kpi-row" id="risk-kpis"></div>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Max Drawdown by Stock</div>
+      <div class="card-sub">Worst peak-to-trough decline since 2010 — lower magnitude = more resilient</div>
+      <div style="position:relative;height:360px;"><canvas id="c-drawdown" role="img" aria-label="Horizontal bar chart of maximum drawdowns.">Max drawdown chart.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Beta vs Market Correlation</div>
+      <div class="card-sub">Systematic risk: beta (sensitivity) × correlation (co-movement) with S&P 500</div>
+      <div style="position:relative;height:360px;"><canvas id="c-beta" role="img" aria-label="Scatter chart of beta vs S&P 500 correlation.">Beta vs correlation scatter.</canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Annualized Volatility</div>
+      <div class="card-sub">Standard deviation of daily returns × √252 — lower = more stable</div>
+      <div style="position:relative;height:260px;"><canvas id="c-vol-bar" role="img" aria-label="Bar chart of annualized volatility per stock.">Volatility bar chart.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">RSI(14) Distribution</div>
+      <div class="card-sub">Momentum oscillator: &lt;30 oversold · 30–70 neutral · &gt;70 overbought</div>
+      <div style="position:relative;height:260px;"><canvas id="c-rsi-bar" role="img" aria-label="Bar chart of RSI values per stock with overbought/oversold zones.">RSI bar chart.</canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TAB: PERFORMANCE ══════════════════════════ -->
+<section class="tab-panel" id="tab-performance">
+  <div class="chart-grid-full">
+    <div class="card">
+      <div class="card-title">Annual Returns by Year (2020–2024)</div>
+      <div class="card-sub">Year-by-year performance — reveals consistency vs one-hit wonders</div>
+      <div style="position:relative;height:380px;"><canvas id="c-yearly" role="img" aria-label="Grouped bar chart of annual returns 2020-2024 for each stock.">Annual returns 2020–2024.</canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Total Return (2022–2024) vs 1Y Return</div>
+      <div class="card-sub">Compares recent momentum with sustained 3-year growth</div>
+      <div style="position:relative;height:300px;"><canvas id="c-total-vs-1y" role="img" aria-label="Grouped bar chart comparing total return vs 1-year return.">Total vs 1Y return.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">30-Day Momentum Leaders</div>
+      <div class="card-sub">Recent price trend — positive = continuing upward move</div>
+      <div style="position:relative;height:300px;"><canvas id="c-mom30" role="img" aria-label="Bar chart of 30-day momentum for all 20 stocks.">30-day momentum.</canvas></div>
+    </div>
+  </div>
+  <!-- Year table -->
+  <div class="card">
+    <div class="card-title">Annual Return Table</div>
+    <div class="card-sub">Color-coded: green = positive · red = negative</div>
+    <div class="tbl-wrap" style="margin-top:12px;">
+      <table id="yr-table">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Company</th>
+            <th style="text-align:right">2020</th>
+            <th style="text-align:right">2021</th>
+            <th style="text-align:right">2022</th>
+            <th style="text-align:right">2023</th>
+            <th style="text-align:right">2024</th>
+            <th style="text-align:right">Avg/Yr</th>
+          </tr>
+        </thead>
+        <tbody id="yr-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TAB: FUNDAMENTALS ══════════════════════════ -->
+<section class="tab-panel" id="tab-fundamentals">
+  <div class="kpi-row" id="fund-kpis"></div>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Market Capitalization</div>
+      <div class="card-sub">Log scale — covers large-cap to mid-cap range</div>
+      <div style="position:relative;height:340px;"><canvas id="c-mktcap" role="img" aria-label="Horizontal bar chart of market cap for top 20 stocks.">Market cap chart.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Revenue Growth Rate</div>
+      <div class="card-sub">Year-over-year revenue growth — growth stocks vs value plays</div>
+      <div style="position:relative;height:340px;"><canvas id="c-revgrow" role="img" aria-label="Bar chart of revenue growth rates.">Revenue growth.</canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">EBITDA (Profitability Proxy)</div>
+      <div class="card-sub">Earnings before interest, taxes, depreciation — operational cash power</div>
+      <div style="position:relative;height:280px;"><canvas id="c-ebitda" role="img" aria-label="Bar chart of EBITDA for each stock.">EBITDA bar chart.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">S&P 500 Index Weight</div>
+      <div class="card-sub">Portfolio weight in the S&P 500 index — larger = more institutional ownership</div>
+      <div style="position:relative;height:280px;"><canvas id="c-weight" role="img" aria-label="Bar chart of S&P 500 index weights.">Index weight.</canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TAB: HEATMAP ══════════════════════════ -->
+<section class="tab-panel" id="tab-heatmap">
+  <div class="filter-bar" style="margin-bottom:16px;">
+    <span style="font-size:12px;color:var(--muted);">Color by:</span>
+    <select id="hm-metric" onchange="renderHeatmap()">
+      <option value="Composite_Score">Composite Score</option>
+      <option value="Return_1Y_pct">1Y Return</option>
+      <option value="Momentum_30d">30D Momentum</option>
+      <option value="Sharpe_Ratio">Sharpe Ratio</option>
+      <option value="max_dd">Max Drawdown</option>
+      <option value="rsi">RSI(14)</option>
+      <option value="beta">Beta</option>
+    </select>
+  </div>
+  <div class="card" style="padding:20px 20px 24px;">
+    <div class="card-title" id="hm-title">Composite Score Heatmap</div>
+    <div class="card-sub">Darker blue = higher score · hover for details</div>
+    <div class="heatmap-grid" id="heatmap-grid" style="margin-top:16px;"></div>
+    <div id="hm-legend" style="display:flex;align-items:center;gap:8px;margin-top:20px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">
+      <span>Low</span>
+      <div id="legend-grad" style="flex:1;height:8px;border-radius:4px;"></div>
+      <span>High</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>
+    <div class="footer-brand">S&P 500 Quantitative Screener</div>
+    <div class="footer-disc">
+      This dashboard is a data science portfolio project. All analysis is based on historical price data (2010–2024) from the S&P 500 universe.
+      Past performance does not guarantee future results. This is not financial advice. Always conduct independent research before making investment decisions.
+    </div>
+  </div>
+  <div>
+    <div class="footer-links">
+      <a href="https://github.com" target="_blank">GitHub</a>
+      <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+    </div>
+  </div>
+</footer>
+
+</div><!-- /shell -->
+<div class="tooltip-box" id="tooltip"></div>
+
+<script>
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
+const STOCKS = [
+  {Symbol:"GDDY",Name:"GoDaddy Inc.",Sector:"Technology",Industry:"Software - Infrastructure",Latest_Price:205.41,Return_1Y_pct:92.15,Return_Total_pct:143.09,Volatility_pct:29.90,Sharpe_Ratio:3.082,Momentum_30d:15.50,Avg_Volume:1379365,Composite_Score:100.0,Marketcap:28837718016,Ebitda:1015600000,Revenuegrowth:0.073,Fulltimeemployees:6159,Weight:0.000519,beta:1.082,w52_high:209.03,w52_low:100.22,pct_from_high:-1.7,max_dd:-50.1,corr_sp:0.537,vol_trend:-1.2,rsi:60.4,yearly:{2020:21.0,2021:3.8,2022:-11.5,2023:43.0,2024:99.4}},
+  {Symbol:"UAL",Name:"United Airlines Holdings",Sector:"Industrials",Industry:"Airlines",Latest_Price:97.40,Return_1Y_pct:128.75,Return_Total_pct:114.11,Volatility_pct:45.87,Sharpe_Ratio:2.806,Momentum_30d:11.30,Avg_Volume:9067115,Composite_Score:98.8,Marketcap:32032522240,Ebitda:7483000000,Revenuegrowth:0.025,Fulltimeemployees:106500,Weight:0.000576,beta:1.389,w52_high:102.44,w52_low:37.88,pct_from_high:-4.9,max_dd:-79.4,corr_sp:0.503,vol_trend:-6.6,rsi:50.7,yearly:{2020:-51.8,2021:5.2,2022:-17.1,2023:10.9,2024:139.2}},
+  {Symbol:"AXON",Name:"Axon Enterprise Inc.",Sector:"Industrials",Industry:"Aerospace & Defense",Latest_Price:631.69,Return_1Y_pct:145.95,Return_Total_pct:313.22,Volatility_pct:45.17,Sharpe_Ratio:3.231,Momentum_30d:4.73,Avg_Volume:605404,Composite_Score:98.4,Marketcap:48169394176,Ebitda:183220000,Revenuegrowth:0.317,Fulltimeemployees:3330,Weight:0.000867,beta:1.151,w52_high:689.78,w52_low:244.21,pct_from_high:-8.4,max_dd:-58.6,corr_sp:0.429,vol_trend:57.4,rsi:49.7,yearly:{2020:60.0,2021:34.4,2022:8.5,2023:53.5,2024:151.0}},
+  {Symbol:"FOX",Name:"Fox Corporation",Sector:"Communication Services",Industry:"Entertainment",Latest_Price:46.65,Return_1Y_pct:70.13,Return_Total_pct:39.79,Volatility_pct:25.29,Sharpe_Ratio:2.772,Momentum_30d:12.25,Avg_Volume:1169899,Composite_Score:98.0,Marketcap:21941315584,Ebitda:3026000000,Revenuegrowth:0.111,Fulltimeemployees:10200,Weight:0.000395,beta:0.814,w52_high:46.65,w52_low:25.72,pct_from_high:0.0,max_dd:-50.7,corr_sp:0.523,vol_trend:13.0,rsi:66.5,yearly:{2020:-19.5,2021:22.2,2022:-17.5,2023:-0.8,2024:68.6}},
+  {Symbol:"FOXA",Name:"Fox Corporation (A)",Sector:"Communication Services",Industry:"Entertainment",Latest_Price:49.53,Return_1Y_pct:67.86,Return_Total_pct:37.46,Volatility_pct:26.07,Sharpe_Ratio:2.603,Momentum_30d:11.05,Avg_Volume:3242532,Composite_Score:96.5,Marketcap:21946050560,Ebitda:3026000000,Revenuegrowth:0.111,Fulltimeemployees:10200,Weight:0.000395,beta:0.793,w52_high:49.53,w52_low:28.23,pct_from_high:0.0,max_dd:-50.6,corr_sp:0.493,vol_trend:21.8,rsi:68.4,yearly:{2020:-20.2,2021:29.6,2022:-18.3,2023:-0.5,2024:66.4}},
+  {Symbol:"ANET",Name:"Arista Networks Inc.",Sector:"Technology",Industry:"Computer Hardware",Latest_Price:112.81,Return_1Y_pct:91.74,Return_Total_pct:217.24,Volatility_pct:43.29,Sharpe_Ratio:2.119,Momentum_30d:12.68,Avg_Volume:9180251,Composite_Score:96.4,Marketcap:142113521664,Ebitda:2833342000,Revenuegrowth:0.200,Fulltimeemployees:4023,Weight:0.002557,beta:1.262,w52_high:116.53,w52_low:57.35,pct_from_high:-3.2,max_dd:-52.2,corr_sp:0.531,vol_trend:3.8,rsi:65.7,yearly:{2020:41.9,2021:103.1,2022:-14.7,2023:94.8,2024:94.9}},
+  {Symbol:"AXP",Name:"American Express Co.",Sector:"Financial Services",Industry:"Credit Services",Latest_Price:298.65,Return_1Y_pct:63.55,Return_Total_pct:84.69,Volatility_pct:29.06,Sharpe_Ratio:2.187,Momentum_30d:3.84,Avg_Volume:3177174,Composite_Score:92.7,Marketcap:210382487552,Ebitda:null,Revenuegrowth:0.080,Fulltimeemployees:74600,Weight:0.003785,beta:1.207,w52_high:305.57,w52_low:178.24,pct_from_high:-2.3,max_dd:-49.6,corr_sp:0.696,vol_trend:-4.8,rsi:47.1,yearly:{2020:-2.5,2021:40.2,2022:-11.0,2023:29.2,2024:60.5}},
+  {Symbol:"NFLX",Name:"Netflix Inc.",Sector:"Communication Services",Industry:"Entertainment",Latest_Price:909.05,Return_1Y_pct:84.91,Return_Total_pct:52.18,Volatility_pct:49.17,Sharpe_Ratio:1.727,Momentum_30d:14.34,Avg_Volume:6986768,Composite_Score:92.7,Marketcap:388580671488,Ebitda:9976899000,Revenuegrowth:0.150,Fulltimeemployees:13000,Weight:0.006991,beta:1.167,w52_high:936.56,w52_low:468.5,pct_from_high:-2.9,max_dd:-82.0,corr_sp:0.477,vol_trend:2.0,rsi:54.2,yearly:{2020:64.0,2021:15.2,2022:-50.6,2023:65.1,2024:94.0}},
+  {Symbol:"SYF",Name:"Synchrony Financial",Sector:"Financial Services",Industry:"Credit Services",Latest_Price:65.45,Return_1Y_pct:75.86,Return_Total_pct:50.32,Volatility_pct:37.69,Sharpe_Ratio:2.013,Momentum_30d:2.60,Avg_Volume:5009624,Composite_Score:91.6,Marketcap:25482563584,Ebitda:null,Revenuegrowth:0.116,Fulltimeemployees:20000,Weight:0.000458,beta:1.367,w52_high:68.55,w52_low:34.99,pct_from_high:-4.5,max_dd:-66.4,corr_sp:0.638,vol_trend:7.2,rsi:43.8,yearly:{2020:-0.6,2021:38.7,2022:-28.4,2023:21.5,2024:76.3}},
+  {Symbol:"BSX",Name:"Boston Scientific Corp.",Sector:"Healthcare",Industry:"Medical Devices",Latest_Price:88.95,Return_1Y_pct:59.84,Return_Total_pct:106.28,Volatility_pct:21.79,Sharpe_Ratio:2.746,Momentum_30d:0.79,Avg_Volume:7257756,Composite_Score:91.4,Marketcap:131097174016,Ebitda:4063000000,Revenuegrowth:0.193,Fulltimeemployees:48000,Weight:0.002359,beta:0.932,w52_high:91.5,w52_low:55.65,pct_from_high:-2.8,max_dd:-48.3,corr_sp:0.626,vol_trend:8.1,rsi:41.7,yearly:{2020:-20.7,2021:20.4,2022:7.3,2023:25.6,2024:53.8}},
+  {Symbol:"BK",Name:"Bank of New York Mellon",Sector:"Financial Services",Industry:"Banks - Diversified",Latest_Price:77.62,Return_1Y_pct:55.40,Return_Total_pct:45.98,Volatility_pct:25.15,Sharpe_Ratio:2.203,Momentum_30d:0.73,Avg_Volume:4575906,Composite_Score:88.4,Marketcap:56435798016,Ebitda:null,Revenuegrowth:0.047,Fulltimeemployees:52600,Weight:0.001015,beta:1.029,w52_high:81.87,w52_low:49.95,pct_from_high:-5.2,max_dd:-50.5,corr_sp:0.676,vol_trend:-1.8,rsi:33.7,yearly:{2020:-13.9,2021:43.1,2022:-19.7,2023:16.5,2024:52.5}},
+  {Symbol:"K",Name:"Kellanova",Sector:"Consumer Defensive",Industry:"Packaged Foods",Latest_Price:80.50,Return_1Y_pct:54.58,Return_Total_pct:47.27,Volatility_pct:21.88,Sharpe_Ratio:2.495,Momentum_30d:0.08,Avg_Volume:2712198,Composite_Score:88.1,Marketcap:27748188160,Ebitda:2032000000,Revenuegrowth:-0.007,Fulltimeemployees:23000,Weight:0.000499,beta:0.347,w52_high:80.77,w52_low:51.71,pct_from_high:-0.3,max_dd:-34.7,corr_sp:0.285,vol_trend:-49.9,rsi:44.0,yearly:{2020:-4.7,2021:8.8,2022:13.9,2023:-13.2,2024:44.1}},
+  {Symbol:"FTNT",Name:"Fortinet Inc.",Sector:"Technology",Industry:"Software - Infrastructure",Latest_Price:97.19,Return_1Y_pct:66.11,Return_Total_pct:45.88,Volatility_pct:45.08,Sharpe_Ratio:1.467,Momentum_30d:5.60,Avg_Volume:5829480,Composite_Score:87.2,Marketcap:74491568128,Ebitda:1727900000,Revenuegrowth:0.130,Fulltimeemployees:13986,Weight:0.001340,beta:1.204,w52_high:99.21,w52_low:55.39,pct_from_high:-2.0,max_dd:-51.2,corr_sp:0.537,vol_trend:-11.2,rsi:56.1,yearly:{2020:35.4,2021:146.9,2022:-26.6,2023:20.6,2024:68.2}},
+  {Symbol:"GLW",Name:"Corning Inc.",Sector:"Technology",Industry:"Electronic Components",Latest_Price:47.31,Return_1Y_pct:60.40,Return_Total_pct:39.02,Volatility_pct:27.38,Sharpe_Ratio:2.206,Momentum_30d:-2.89,Avg_Volume:4875220,Composite_Score:85.1,Marketcap:40507248640,Ebitda:2607000000,Revenuegrowth:0.069,Fulltimeemployees:49800,Weight:0.000729,beta:1.162,w52_high:49.76,w52_low:29.17,pct_from_high:-4.9,max_dd:-51.6,corr_sp:0.708,vol_trend:-33.5,rsi:36.2,yearly:{2020:23.8,2021:9.2,2022:-11.5,2023:-3.1,2024:58.8}},
+  {Symbol:"PEG",Name:"Public Service Enterprise",Sector:"Utilities",Industry:"Utilities - Regulated Electric",Latest_Price:85.06,Return_1Y_pct:45.49,Return_Total_pct:42.43,Volatility_pct:21.01,Sharpe_Ratio:2.165,Momentum_30d:-0.20,Avg_Volume:2698633,Composite_Score:84.9,Marketcap:42379018240,Ebitda:4045000000,Revenuegrowth:0.076,Fulltimeemployees:12543,Weight:0.000762,beta:0.623,w52_high:93.86,w52_low:55.2,pct_from_high:-9.4,max_dd:-40.8,corr_sp:0.505,vol_trend:-9.2,rsi:28.0,yearly:{2020:3.0,2021:23.8,2022:-4.3,2023:2.3,2024:42.7}},
+  {Symbol:"T",Name:"AT&T Inc.",Sector:"Communication Services",Industry:"Telecom Services",Latest_Price:22.75,Return_1Y_pct:46.51,Return_Total_pct:44.23,Volatility_pct:25.14,Sharpe_Ratio:1.850,Momentum_30d:1.84,Avg_Volume:41832053,Composite_Score:84.9,Marketcap:163237838848,Ebitda:42773000000,Revenuegrowth:-0.005,Fulltimeemployees:143630,Weight:0.002937,beta:0.621,w52_high:23.88,w52_low:15.53,pct_from_high:-4.7,max_dd:-39.4,corr_sp:0.487,vol_trend:-0.7,rsi:51.3,yearly:{2020:-19.2,2021:-8.1,2022:3.0,2023:-4.4,2024:40.1}},
+  {Symbol:"TSLA",Name:"Tesla Inc.",Sector:"Consumer Cyclical",Industry:"Auto Manufacturers",Latest_Price:421.06,Return_1Y_pct:65.45,Return_Total_pct:5.28,Volatility_pct:61.21,Sharpe_Ratio:1.069,Momentum_30d:31.08,Avg_Volume:106580842,Composite_Score:84.7,Marketcap:1351627833344,Ebitda:13244000000,Revenuegrowth:0.078,Fulltimeemployees:140473,Weight:0.024317,beta:1.487,w52_high:479.86,w52_low:142.05,pct_from_high:-12.3,max_dd:-73.6,corr_sp:0.464,vol_trend:-1.0,rsi:67.9,yearly:{2020:720.1,2021:44.8,2022:-69.2,2023:129.9,2024:69.5}},
+  {Symbol:"WMB",Name:"Williams Companies",Sector:"Energy",Industry:"Oil & Gas Midstream",Latest_Price:53.49,Return_1Y_pct:59.82,Return_Total_pct:134.29,Volatility_pct:22.96,Sharpe_Ratio:2.605,Momentum_30d:-4.18,Avg_Volume:7104857,Composite_Score:83.7,Marketcap:65204850688,Ebitda:5864000000,Revenuegrowth:0.045,Fulltimeemployees:5601,Weight:0.001173,beta:1.062,w52_high:59.23,w52_low:31.63,pct_from_high:-9.7,max_dd:-81.0,corr_sp:0.461,vol_trend:21.8,rsi:37.0,yearly:{2020:-7.3,2021:38.0,2022:30.5,2023:14.5,2024:57.3}},
+  {Symbol:"MO",Name:"Altria Group Inc.",Sector:"Consumer Defensive",Industry:"Tobacco",Latest_Price:53.84,Return_1Y_pct:42.27,Return_Total_pct:41.17,Volatility_pct:20.32,Sharpe_Ratio:2.080,Momentum_30d:-0.39,Avg_Volume:9117727,Composite_Score:82.8,Marketcap:91248566272,Ebitda:12216000000,Revenuegrowth:0.013,Fulltimeemployees:6400,Weight:0.001642,beta:0.558,w52_high:57.74,w52_low:37.3,pct_from_high:-6.8,max_dd:-53.7,corr_sp:0.443,vol_trend:-6.4,rsi:27.7,yearly:{2020:-9.0,2021:24.7,2022:3.1,2023:-3.3,2024:37.9}},
+  {Symbol:"DFS",Name:"Discover Financial Svcs",Sector:"Financial Services",Industry:"Credit Services",Latest_Price:173.16,Return_1Y_pct:59.01,Return_Total_pct:56.53,Volatility_pct:37.70,Sharpe_Ratio:1.565,Momentum_30d:-0.73,Avg_Volume:1936756,Composite_Score:81.6,Marketcap:43475628032,Ebitda:null,Revenuegrowth:0.605,Fulltimeemployees:21100,Weight:0.000782,beta:1.448,w52_high:182.67,w52_low:95.02,pct_from_high:-5.2,max_dd:-72.4,corr_sp:0.667,vol_trend:30.7,rsi:38.7,yearly:{2020:9.5,2021:31.1,2022:-15.8,2023:19.2,2024:57.3}}
+];
+
+const SECTOR_COLORS = {
+  "Technology":"#4f7fff","Financial Services":"#22c983","Communication Services":"#f7b731",
+  "Industrials":"#a78bfa","Healthcare":"#06b6d4","Consumer Defensive":"#fb923c",
+  "Consumer Cyclical":"#f472b6","Energy":"#34d399","Utilities":"#94a3b8"
+};
+const YEARS = [2020,2021,2022,2023,2024];
+
+/* ════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+function fmt(v, dec=1){ return v==null?'—':(v>=0?'+':'')+v.toFixed(dec)+'%'; }
+function fmtB(v){ if(v==null)return '—'; if(v>=1e12)return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9)return '$'+(v/1e9).toFixed(1)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; }
+function badge(v, fmt_fn){
+  const s = fmt_fn ? fmt_fn(v) : (v>=0?'+':'')+v.toFixed(1)+'%';
+  const cls = v>0?'badge-green':v<0?'badge-red':'badge-gray';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+function rsiColor(r){ if(r<30) return '#f5525a'; if(r>70) return '#f7b731'; return '#22c983'; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function heatColor(norm, invert=false){
+  const t = invert ? 1-norm : norm;
+  const r = Math.round(lerp(20,79,t)); const g = Math.round(lerp(20,127,t)); const b_c = Math.round(lerp(30,255,t));
+  return `rgb(${r},${g},${b_c})`;
+}
+
+/* ════════════════════════════════════════
+   TAB SWITCH
+════════════════════════════════════════ */
+let chartsBuilt = {};
+function switchTab(id, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(!chartsBuilt[id]){ buildTab(id); chartsBuilt[id]=true; }
+}
+function buildTab(id){
+  if(id==='risk') buildRiskTab();
+  else if(id==='performance') buildPerformanceTab();
+  else if(id==='fundamentals') buildFundamentalsTab();
+  else if(id==='heatmap') renderHeatmap();
+}
+
+/* ════════════════════════════════════════
+   KPI ROW (OVERVIEW)
+════════════════════════════════════════ */
+function buildKPIs(){
+  const avg1Y = (STOCKS.reduce((s,d)=>s+d.Return_1Y_pct,0)/STOCKS.length).toFixed(1);
+  const avgSharpe = (STOCKS.reduce((s,d)=>s+d.Sharpe_Ratio,0)/STOCKS.length).toFixed(2);
+  const avgVol = (STOCKS.reduce((s,d)=>s+d.Volatility_pct,0)/STOCKS.length).toFixed(1);
+  const avgBeta = (STOCKS.reduce((s,d)=>s+d.beta,0)/STOCKS.length).toFixed(2);
+  const topMom = STOCKS.reduce((a,b)=>a.Momentum_30d>b.Momentum_30d?a:b);
+  const lowestDD = STOCKS.reduce((a,b)=>a.max_dd>b.max_dd?a:b);
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Avg 1Y Return</div><div class="kpi-val green">${avg1Y}%</div><div class="kpi-sub">Across all 20 picks</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Sharpe Ratio</div><div class="kpi-val">${avgSharpe}</div><div class="kpi-sub">Risk-adjusted performance</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Volatility</div><div class="kpi-val amber">${avgVol}%</div><div class="kpi-sub">Annualized std deviation</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Beta</div><div class="kpi-val">${avgBeta}</div><div class="kpi-sub">Market sensitivity</div></div>
+    <div class="kpi"><div class="kpi-label">Top Momentum</div><div class="kpi-val green">${topMom.Symbol}</div><div class="kpi-sub">+${topMom.Momentum_30d.toFixed(1)}% in 30 days</div></div>
+    <div class="kpi"><div class="kpi-label">Lowest Drawdown</div><div class="kpi-val green">${lowestDD.Symbol}</div><div class="kpi-sub">${lowestDD.max_dd.toFixed(1)}% max DD</div></div>
+  `;
+}
+
+/* ════════════════════════════════════════
+   OVERVIEW CHARTS
+════════════════════════════════════════ */
+function buildOverviewCharts(){
+  const sorted = [...STOCKS].sort((a,b)=>a.Composite_Score-b.Composite_Score);
+
+  // Ranking bar
+  new Chart(document.getElementById('c-ranking'),{
+    type:'bar',
+    data:{
+      labels: sorted.map(d=>d.Symbol),
+      datasets:[{
+        data: sorted.map(d=>d.Composite_Score),
+        backgroundColor: sorted.map(d=> d.Composite_Score>=95?'#4f7fff': d.Composite_Score>=88?'#22c983':'#7878a0'),
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{min:75,max:105, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#7878a0',font:{size:10}}},
+        y:{grid:{display:false}, ticks:{color:'#e8e8f0',font:{size:11,family:'Syne'}}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Score: ${c.raw}`}}}
+    }
+  });
+
+  // Scatter
+  new Chart(document.getElementById('c-scatter'),{
+    type:'bubble',
+    data:{datasets:[{
+      label:'Stocks',
+      data: STOCKS.map(d=>({x:d.Volatility_pct,y:d.Return_1Y_pct,r:Math.max(5,d.Composite_Score/13),sym:d.Symbol})),
+      backgroundColor: STOCKS.map(d=>d.Composite_Score>=95?'rgba(79,127,255,0.75)':d.Composite_Score>=88?'rgba(34,201,131,0.65)':'rgba(120,120,160,0.5)'),
+      borderColor:'transparent'
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:20,right:20}},
+      scales:{
+        x:{title:{display:true,text:'Annualized Volatility (%)',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}},
+        y:{title:{display:true,text:'1-Year Return (%)',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}}
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.raw.sym}: ${c.raw.y.toFixed(1)}% ret, ${c.raw.x.toFixed(1)}% vol`}}
+      }
+    }
+  });
+
+  // Sector donut
+  const sectors = {};
+  STOCKS.forEach(d=>{ sectors[d.Sector]=(sectors[d.Sector]||0)+1; });
+  const sLabels = Object.keys(sectors), sCounts = Object.values(sectors);
+  new Chart(document.getElementById('c-sector'),{
+    type:'doughnut',
+    data:{
+      labels:sLabels,
+      datasets:[{data:sCounts,backgroundColor:sLabels.map(s=>SECTOR_COLORS[s]||'#888'),borderColor:'#0d0d14',borderWidth:2}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'60%',
+      plugins:{
+        legend:{position:'right',labels:{color:'#7878a0',font:{size:10},boxWidth:12,padding:10}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} stocks`}}
+      }
+    }
+  });
+
+  // Sharpe vs Beta scatter
+  new Chart(document.getElementById('c-sharpebeta'),{
+    type:'scatter',
+    data:{datasets:[{
+      data: STOCKS.map(d=>({x:d.beta,y:d.Sharpe_Ratio,sym:d.Symbol})),
+      backgroundColor: STOCKS.map(d=>SECTOR_COLORS[d.Sector]||'#888'),
+      pointRadius:7, pointHoverRadius:10
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{title:{display:true,text:'Beta (market sensitivity)',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}},
+        y:{title:{display:true,text:'Sharpe Ratio',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}}
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.raw.sym}: β=${c.raw.x.toFixed(2)}, Sharpe=${c.raw.y.toFixed(2)}`}}
+      }
+    }
+  });
+}
+
+/* ════════════════════════════════════════
+   SCREENER TABLE
+════════════════════════════════════════ */
+function buildSectorFilter(){
+  const sectors = [...new Set(STOCKS.map(d=>d.Sector))].sort();
+  const sel = document.getElementById('sector-filter');
+  sectors.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+}
+function renderTable(){
+  const q = document.getElementById('search-input').value.trim().toUpperCase();
+  const sec = document.getElementById('sector-filter').value;
+  const sortKey = document.getElementById('sort-filter').value;
+  const asc = sortKey === 'Volatility_pct';
+
+  let filtered = STOCKS.filter(d=>{
+    const matchQ = !q || d.Symbol.includes(q) || d.Name.toUpperCase().includes(q);
+    const matchS = !sec || d.Sector === sec;
+    return matchQ && matchS;
+  });
+  filtered = [...filtered].sort((a,b)=>{
+    const av = a[sortKey]??-Infinity, bv = b[sortKey]??-Infinity;
+    return asc ? av-bv : bv-av;
+  });
+
+  document.getElementById('result-count').textContent = filtered.length+' stocks';
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = filtered.map((d,i)=>{
+    const sc = SECTOR_COLORS[d.Sector]||'#888';
+    const rsi_color = rsiColor(d.rsi);
+    const range_pct = (d.Latest_Price - d.w52_low)/(d.w52_high - d.w52_low)*100;
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">#${i+1}</td>
+      <td><div class="sym-cell">${d.Symbol}<small>${d.Name}</small></div></td>
+      <td><span class="sector-tag" style="color:${sc};border-color:${sc}40">${d.Sector}</span></td>
+      <td style="font-family:'DM Mono',monospace">$${d.Latest_Price.toFixed(2)}</td>
+      <td>
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px">$${d.w52_low} — $${d.w52_high}</div>
+        <div class="52w-bar"><div class="52w-range" style="width:${range_pct.toFixed(0)}%"></div><div class="52w-cursor" style="left:${range_pct.toFixed(0)}%"></div></div>
+      </td>
+      <td>${badge(d.Return_1Y_pct)}</td>
+      <td style="font-family:'DM Mono',monospace;color:${d.Sharpe_Ratio>2.5?'#22c983':d.Sharpe_Ratio>1.5?'#f7b731':'#f5525a'}">${d.Sharpe_Ratio.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;color:${d.beta>1.3?'#f5525a':d.beta<0.7?'#22c983':'#e8e8f0'}">${d.beta.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;color:${d.Volatility_pct>50?'#f5525a':d.Volatility_pct>35?'#f7b731':'#22c983'}">${d.Volatility_pct.toFixed(1)}%</td>
+      <td>${badge(d.Momentum_30d)}</td>
+      <td><span class="rsi-pill" style="background:${rsi_color}22;color:${rsi_color}">${d.rsi.toFixed(1)}</span></td>
+      <td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${d.Composite_Score}%"></div></div><span class="score-num">${d.Composite_Score}</span></div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════
+   RISK TAB
+════════════════════════════════════════ */
+function buildRiskTab(){
+  const avgBeta = (STOCKS.reduce((s,d)=>s+d.beta,0)/STOCKS.length).toFixed(2);
+  const avgDD = (STOCKS.reduce((s,d)=>s+d.max_dd,0)/STOCKS.length).toFixed(1);
+  const avgCorr = (STOCKS.reduce((s,d)=>s+d.corr_sp,0)/STOCKS.length).toFixed(2);
+  const overbought = STOCKS.filter(d=>d.rsi>70).length;
+  const oversold = STOCKS.filter(d=>d.rsi<30).length;
+  document.getElementById('risk-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Avg Beta</div><div class="kpi-val">${avgBeta}</div><div class="kpi-sub">Market sensitivity</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Max Drawdown</div><div class="kpi-val" style="color:var(--red)">${avgDD}%</div><div class="kpi-sub">Historical peak-to-trough</div></div>
+    <div class="kpi"><div class="kpi-label">Avg S&P Correlation</div><div class="kpi-val">${avgCorr}</div><div class="kpi-sub">Co-movement with index</div></div>
+    <div class="kpi"><div class="kpi-label">RSI Signals</div><div class="kpi-val amber">${overbought} OB / ${oversold} OS</div><div class="kpi-sub">Overbought / oversold</div></div>
+  `;
+
+  const sortedDD = [...STOCKS].sort((a,b)=>a.max_dd-b.max_dd);
+  new Chart(document.getElementById('c-drawdown'),{
+    type:'bar',
+    data:{
+      labels:sortedDD.map(d=>d.Symbol),
+      datasets:[{
+        data:sortedDD.map(d=>d.max_dd),
+        backgroundColor:sortedDD.map(d=>d.max_dd>-55?'rgba(245,82,90,0.85)':'rgba(247,183,49,0.7)'),
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}},title:{display:true,text:'Drawdown (%)',color:'#7878a0',font:{size:10}}},
+        y:{grid:{display:false},ticks:{color:'#e8e8f0',font:{size:11}}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Max DD: ${c.raw.toFixed(1)}%`}}}
+    }
+  });
+
+  new Chart(document.getElementById('c-beta'),{
+    type:'scatter',
+    data:{datasets:[{
+      data:STOCKS.map(d=>({x:d.beta,y:d.corr_sp,sym:d.Symbol})),
+      backgroundColor:STOCKS.map(d=>SECTOR_COLORS[d.Sector]||'#888'),
+      pointRadius:8, pointHoverRadius:11
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{title:{display:true,text:'Beta',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}},
+        y:{title:{display:true,text:'S&P 500 Correlation',color:'#7878a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.sym}: β=${c.raw.x.toFixed(2)}, r=${c.raw.y.toFixed(2)}`}}}
+    }
+  });
+
+  const sortedVol = [...STOCKS].sort((a,b)=>b.Volatility_pct-a.Volatility_pct);
+  new Chart(document.getElementById('c-vol-bar'),{
+    type:'bar',
+    data:{
+      labels:sortedVol.map(d=>d.Symbol),
+      datasets:[{data:sortedVol.map(d=>d.Volatility_pct),backgroundColor:sortedVol.map(d=>d.Volatility_pct>50?'#f5525a':d.Volatility_pct>35?'#f7b731':'#22c983'),borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}},title:{display:true,text:'Volatility %',color:'#7878a0',font:{size:10}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
+
+  new Chart(document.getElementById('c-rsi-bar'),{
+    type:'bar',
+    data:{
+      labels:STOCKS.map(d=>d.Symbol),
+      datasets:[{data:STOCKS.map(d=>d.rsi),backgroundColor:STOCKS.map(d=>rsiColor(d.rsi)+'bb'),borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},
+        y:{min:0,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}},
+          afterDataLimits(ax){ ax.min=0; ax.max=100; }}
+      },
+      plugins:{
+        legend:{display:false},
+        annotation: {annotations:{
+          ob:{type:'line',yMin:70,yMax:70,borderColor:'#f7b731',borderWidth:1,borderDash:[4,4]},
+          os:{type:'line',yMin:30,yMax:30,borderColor:'#f5525a',borderWidth:1,borderDash:[4,4]}
+        }}
+      }
+    }
+  });
+}
+
+/* ════════════════════════════════════════
+   PERFORMANCE TAB
+════════════════════════════════════════ */
+function buildPerformanceTab(){
+  const colors5 = ['#4f7fff','#22c983','#f7b731','#a78bfa','#f472b6'];
+
+  // Grouped bar: yearly returns per year (datasets = years)
+  new Chart(document.getElementById('c-yearly'),{
+    type:'bar',
+    data:{
+      labels:STOCKS.map(d=>d.Symbol),
+      datasets: YEARS.map((yr,i)=>({
+        label:String(yr),
+        data: STOCKS.map(d=>d.yearly[yr]??null),
+        backgroundColor: colors5[i]+'bb',
+        borderRadius:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}},title:{display:true,text:'Return (%)',color:'#7878a0',font:{size:10}}}
+      },
+      plugins:{
+        legend:{labels:{color:'#7878a0',font:{size:10},boxWidth:10,padding:8}},
+        tooltip:{callbacks:{label:c=>c.raw!=null?`${c.dataset.label}: ${c.raw>0?'+':''}${c.raw.toFixed(1)}%`:'N/A'}}
+      }
+    }
+  });
+
+  // Total vs 1Y
+  new Chart(document.getElementById('c-total-vs-1y'),{
+    type:'bar',
+    data:{
+      labels:STOCKS.map(d=>d.Symbol),
+      datasets:[
+        {label:'Total Return (2022–24)',data:STOCKS.map(d=>d.Return_Total_pct),backgroundColor:'#4f7fff88',borderRadius:3},
+        {label:'1Y Return',data:STOCKS.map(d=>d.Return_1Y_pct),backgroundColor:'#22c98388',borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}}
+      },
+      plugins:{legend:{labels:{color:'#7878a0',font:{size:10},boxWidth:10}}}
+    }
+  });
+
+  // 30d momentum
+  const sortedMom = [...STOCKS].sort((a,b)=>b.Momentum_30d-a.Momentum_30d);
+  new Chart(document.getElementById('c-mom30'),{
+    type:'bar',
+    data:{
+      labels:sortedMom.map(d=>d.Symbol),
+      datasets:[{data:sortedMom.map(d=>d.Momentum_30d),backgroundColor:sortedMom.map(d=>d.Momentum_30d>=0?'#22c98399':'#f5525a99'),borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
+
+  // Year table
+  const tbody = document.getElementById('yr-body');
+  tbody.innerHTML = STOCKS.map(d=>{
+    const vals = YEARS.map(yr=>d.yearly[yr]);
+    const avg = vals.filter(v=>v!=null).reduce((s,v)=>s+v,0)/vals.filter(v=>v!=null).length;
+    const yrcells = YEARS.map(yr=>{
+      const v = d.yearly[yr];
+      if(v==null) return `<td class="yr-cell" style="color:var(--muted)">—</td>`;
+      const col = v>0?'#22c983':v<0?'#f5525a':'#7878a0';
+      return `<td class="yr-cell" style="color:${col}">${v>0?'+':''}${v.toFixed(1)}%</td>`;
+    }).join('');
+    const avgcol = avg>0?'#22c983':avg<0?'#f5525a':'#7878a0';
+    return `<tr>
+      <td style="font-family:'Syne',sans-serif;font-weight:700;padding:9px 12px">${d.Symbol}</td>
+      <td style="font-size:11px;color:var(--muted);padding:9px 12px">${d.Name}</td>
+      ${yrcells}
+      <td class="yr-cell" style="color:${avgcol};font-weight:500">${avg>0?'+':''}${avg.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════
+   FUNDAMENTALS TAB
+════════════════════════════════════════ */
+function buildFundamentalsTab(){
+  const totalMCap = STOCKS.reduce((s,d)=>s+d.Marketcap,0);
+  const avgRevGrowth = (STOCKS.reduce((s,d)=>s+d.Revenuegrowth,0)/STOCKS.length*100).toFixed(1);
+  const withEBITDA = STOCKS.filter(d=>d.Ebitda!=null);
+  const avgEBITDA = withEBITDA.reduce((s,d)=>s+d.Ebitda,0)/withEBITDA.length;
+  document.getElementById('fund-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total Market Cap</div><div class="kpi-val">${fmtB(totalMCap)}</div><div class="kpi-sub">Combined value</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Revenue Growth</div><div class="kpi-val green">${avgRevGrowth}%</div><div class="kpi-sub">Year-over-year</div></div>
+    <div class="kpi"><div class="kpi-label">Avg EBITDA</div><div class="kpi-val">${fmtB(avgEBITDA)}</div><div class="kpi-sub">Operational profitability</div></div>
+    <div class="kpi"><div class="kpi-label">Sectors Covered</div><div class="kpi-val">${new Set(STOCKS.map(d=>d.Sector)).size}</div><div class="kpi-sub">Diversified exposure</div></div>
+  `;
+
+  const sortedMC = [...STOCKS].sort((a,b)=>b.Marketcap-a.Marketcap);
+  new Chart(document.getElementById('c-mktcap'),{
+    type:'bar',
+    data:{
+      labels:sortedMC.map(d=>d.Symbol),
+      datasets:[{data:sortedMC.map(d=>d.Marketcap/1e9),backgroundColor:sortedMC.map(d=>SECTOR_COLORS[d.Sector]+'bb'),borderRadius:4}]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{type:'logarithmic',grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:9},callback:v=>'$'+v+'B'}},
+        y:{grid:{display:false},ticks:{color:'#e8e8f0',font:{size:11}}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(1)}B`}}}
+    }
+  });
+
+  const sortedRG = [...STOCKS].sort((a,b)=>b.Revenuegrowth-a.Revenuegrowth);
+  new Chart(document.getElementById('c-revgrow'),{
+    type:'bar',
+    data:{
+      labels:sortedRG.map(d=>d.Symbol),
+      datasets:[{data:sortedRG.map(d=>+(d.Revenuegrowth*100).toFixed(1)),backgroundColor:sortedRG.map(d=>d.Revenuegrowth>=0?'#4f7fff99':'#f5525a99'),borderRadius:4}]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:9},callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{color:'#e8e8f0',font:{size:11}}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Rev Growth: ${c.raw}%`}}}
+    }
+  });
+
+  const withE = STOCKS.filter(d=>d.Ebitda!=null).sort((a,b)=>b.Ebitda-a.Ebitda);
+  new Chart(document.getElementById('c-ebitda'),{
+    type:'bar',
+    data:{
+      labels:withE.map(d=>d.Symbol),
+      datasets:[{data:withE.map(d=>+(d.Ebitda/1e9).toFixed(2)),backgroundColor:withE.map(d=>SECTOR_COLORS[d.Sector]+'99'),borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10},callback:v=>'$'+v+'B'}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`EBITDA: $${c.raw}B`}}}
+    }
+  });
+
+  const sortedW = [...STOCKS].sort((a,b)=>b.Weight-a.Weight);
+  new Chart(document.getElementById('c-weight'),{
+    type:'bar',
+    data:{
+      labels:sortedW.map(d=>d.Symbol),
+      datasets:[{data:sortedW.map(d=>+(d.Weight*100).toFixed(4)),backgroundColor:'#a78bfa88',borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7878a0',font:{size:9}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7878a0',font:{size:10},callback:v=>v.toFixed(3)+'%'}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Weight: ${c.raw.toFixed(4)}%`}}}
+    }
+  });
+}
+
+/* ════════════════════════════════════════
+   HEATMAP TAB
+════════════════════════════════════════ */
+function renderHeatmap(){
+  const metric = document.getElementById('hm-metric').value;
+  const labels = {
+    Composite_Score:'Composite Score',Return_1Y_pct:'1-Year Return (%)',
+    Momentum_30d:'30D Momentum (%)',Sharpe_Ratio:'Sharpe Ratio',
+    max_dd:'Max Drawdown (%)',rsi:'RSI(14)',beta:'Beta'
+  };
+  document.getElementById('hm-title').textContent = labels[metric]+' Heatmap';
+  const invert = metric === 'max_dd';
+
+  const vals = STOCKS.map(d=>d[metric]);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const norm = v => mx===mn ? 0.5 : (v-mn)/(mx-mn);
+
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = STOCKS.map(d=>{
+    const v = d[metric];
+    const n = norm(v);
+    const bg = heatColor(n, invert);
+    const sign = v >= 0 ? '+' : '';
+    const display = ['Return_1Y_pct','Momentum_30d','max_dd'].includes(metric) ? sign+v.toFixed(1)+'%' : v.toFixed(metric==='beta'?2:1);
+    return `<div class="hm-cell" style="background:${bg}20;border:1px solid ${bg}40" title="${d.Name}">
+      <div class="hm-sym" style="color:${bg}">${d.Symbol}</div>
+      <div class="hm-val" style="color:#e8e8f0">${display}</div>
+      <div class="hm-label">${d.Sector.split(' ')[0]}</div>
+    </div>`;
+  }).join('');
+
+  const grad = document.getElementById('legend-grad');
+  grad.style.background = `linear-gradient(90deg,${heatColor(0,invert)},${heatColor(0.5,invert)},${heatColor(1,invert)})`;
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', ()=>{
+  buildKPIs();
+  buildOverviewCharts();
+  buildSectorFilter();
+  renderTable();
+  chartsBuilt['overview'] = true;
+});
+</script>
+</body>
+</html>
